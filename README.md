@@ -1,7 +1,7 @@
 # Introduction
 A simple, header-only library for compile-time symbolic computation, written in C++17.
 
-Currently only supports integration and derivation of polynomial or piecewise polynomial functions, in any number of dimensions.
+Currently only supports integration and derivation of polynomial or piecewise polynomial functions (whose conditions are given by simple inequalities), in any number of dimensions.
 
 # Requirements
 Simbpolic requires a C++17-compatible compiler and the corresponding standard library. No further dependencies.
@@ -25,7 +25,19 @@ All of these classes, except `Simbpolic::Var` support all usual algebric operato
 
 There are some functions that allow for more elaborate functions, namely:
 
-* ...
+* `Simbpolic::change_dim(Var<from>, Var<to>, function)`: Changes any terms of `function` that depend on the variable with index `from` to depend on the variable with index `to`
+* `Simbpolic::offset(Var<dim>, offset, function)`: Changes `function(..., x_dim, ...)` to `function(..., x_dim + offset, ...)` in a manner consistent with piecewise functions
+* `Simbpolic::reverse(Var<dim>, function)`: Changes `function(..., x_dim, ...)` to `function(..., -x_dim, ...)` in a manner consistent with piecewise functions
+* `Simbpolic::expand(Var<dim>, factor, function)`: Changes `function(..., x_dim, ...)` to `function(..., x_dim * factor, ...)`, for factor > 0, in a manner consistent with piecewise functions
+* `Simbpolic::integrate(function, Var<dim1>, a_1, b_1, ...)`: Gives the integral of `function` along `dim1` from `a_1` to `b_1`. If any additional arguments are given, integrates along other dimensions as well.
+* `Simbpolic::branched(Var<dim>, f_1, k_1, f_2, ...)`: Gives the piecewise function that is `f_1` for `x_dim < k_1` and `f_2` for `x_dim > k_1`. If any additional arguments are provided (in the form `k_i, f_i`), keeps giving the branched function that is, in general, `f_(i-1)` for `k_(i-1) < x_dim < k_i` (where we can consider, to make this a really general expression, `k_0 = -\infty` and `k_n = +\infty`).
+
+All of the symbolic functions provided by Simbpolic have the `derivative<dim>()` and `primitive<dim>()` member function, which give, respectively, the derivative and primitive along dimension `dim`, the `evaluate_along_dim<dim>(val)` which evaluate the function at `x_dim = val` (and the remaining coordinates unspecified), and an `operator(...)` which will evaluate the function with `x_i` given by the `i`-th argument (with the coordinates with index greater than the number of arguments remaining unspecified).
+
+
+Obviously, for any of this to work, the `simbpolic.h` file and the `simbpolic` folder must be placed in a location where the compiler or build system knows where to look for header files, but, given the diversity of choices in that area, the author will relay the responsibility of ensuring that to the user (or whomever set up the build enviroment the user is working in).
+
+# Configuration
 
 By default, Simbpolic uses `double` as the variable type (`ResultType`) and `int` as the variable for holding integer values (`IntegerType`). However, should the user need to change these definitions, a very convenient way of achiving this is provided: by defining a class `Simbpolic::Configuration` before `#include "simbpolic.h"` with a public `ResultType` or `IntegerType` typedef, the specified types will be used instead of the defaults. If the types are ommitted, the default values will be used.
 
@@ -42,10 +54,6 @@ namespace Simbpolic
   };
 }
 ```
-
-
-
-Obviously, for any of this to work, the `simbpolic.h` file and the `simbpolic` folder must be placed in a location where the compiler or build system knows where to look for header files, but, given the diversity of choices in that area, the author will relay the responsibility of ensuring that to the user (or whomever set up the build enviroment the user is working in).
 
 # Warnings and Caveats
 Since all the functions and operations are specified using template metaprogramming, the usage of the `auto` keyword is more or less essential.
